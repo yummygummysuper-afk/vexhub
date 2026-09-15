@@ -16,6 +16,39 @@ print(("[VexHub] Loaded. Mobile=%s Touch=%s KB=%s Gamepad=%s"):format(
     tostring(UserInputService.GamepadEnabled)
 ))
 
+local controlModule
+do
+    local ok, err = pcall(function()
+        local playerScripts = player:WaitForChild("PlayerScripts", 10)
+        if not playerScripts then
+            error("PlayerScripts not found")
+        end
+        local playerModule = playerScripts:WaitForChild("PlayerModule", 10)
+        if not playerModule then
+            error("PlayerModule not found")
+        end
+        local mod = require(playerModule)
+        controlModule = mod:GetControls()
+    end)
+    if not ok then
+        warn("[VexHub] ControlModule init failed: " .. tostring(err))
+    else
+        print("[VexHub] ControlModule ready")
+    end
+end
+
+local function getMoveVector()
+    if controlModule then
+        local ok, vec = pcall(function()
+            return controlModule:GetMoveVector()
+        end)
+        if ok and typeof(vec) == "Vector3" then
+            return vec
+        end
+    end
+    return Vector3.zero
+end
+
 local BLACK = Color3.fromRGB(10, 10, 12)
 local BLACK_2 = Color3.fromRGB(18, 18, 22)
 local GREEN = Color3.fromRGB(0, 255, 120)
@@ -101,7 +134,7 @@ title.ZIndex = 3
 title.Parent = header
 
 local subtitle = Instance.new("TextLabel")
-subtitle.Text = "utility v2.3"
+subtitle.Text = "utility v2.4"
 subtitle.Font = Enum.Font.Gotham
 subtitle.TextSize = math.floor(11 * UI_SCALE)
 subtitle.TextColor3 = Color3.fromRGB(120, 200, 150)
@@ -558,7 +591,7 @@ local function startFly()
             local cam = workspace.CurrentCamera
             if not cam then return end
 
-            local mv = UserInputService:GetMoveVector()
+            local mv = getMoveVector()
             local dir = Vector3.zero
 
             if tick() - lastDebug > 1 then
